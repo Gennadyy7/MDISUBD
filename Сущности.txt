@@ -1,0 +1,71 @@
+1) user базовая таблица пользователей
+id INT PK
+username VARCHAR 150 символов
+password VARCHAR 128 символов
+email VARCHAR 254 символа
+date_joined DATETIME 
+name VARCHAR 150 символов
+surname VARCHAR 150 символов
+patronymic VARCHAR 150 символов
+is_superuser BOOLEAN является ли пользователь админом
+phone VARCHAR 20 символов
+
+2) client таблица, расширяющая базовую для пользователей уникальными полями; может быть связан с несколькими client_log; может быть связан с несколькими записями review; может быть связан с несколькими записями order
+id INT PK
+birth_date DATE	не младше 18 лет на момент создания записи
+address	VARCHAR	улица, дом, корпус, квартира; 250 символов
+user_id	INT для связи с таблицей user
+
+3) doctor таблица, расширяющая базовую для пользователей уникальными полями; классифицируется таблицей specialization; может быть связан с несколькими записями review
+id INT PK
+office_phone VARCHAR 20 символов
+specialization_id INT для связи с таблицей specialization
+user_id INT для связи с таблицей user
+
+4) specialization классифицирует записи doctor; сопоставлен с одной записью service_category
+id INT PK
+name VARCHAR 150 символов
+description VARCHAR без ограничений
+
+5) service классифицируется таблицей service_category; может быть связан с несколькими записями order
+id INT PK
+title VARCHAR 150 символов
+description VARCHAR без ограничений
+price DECIMAL неотрицательное число
+category_id INT для связи с таблицей service_category
+
+6) service_category может быть связан с несколькими записями service; сопоставлен с одной записью specialization
+id INT PK
+name VARCHAR 150 символов
+specialization_id INT для связи с таблицей specialization
+
+7) review сопоставлен с одной записью client и с одной записью doctor (клиент оставляет отзыв на врача)
+id INT PK
+text VARCHAR без ограничений
+rating INT от 1 до 5
+created_at DATETIME авто
+client_id INT для связи с таблицей client
+doctor_id INT для связи с таблицей doctor
+
+8) order связан с одной или несколькими записями service; может быть связан с одной записью promocode; связан с одной записью doctor; связан с одной записью client
+id INT PK
+appointment_date DATETIME не раньше 9 утра следующего дня
+total_price DECIMAL неотрицательное число
+created_at DATETIME авто
+client_id INT для связи с таблицей client
+doctor_id INT для связи с таблицей doctor
+promocode_id INT для связи с таблицей promocode
+
+9) promocode может быть связан с несколькими записями order
+id INT PK
+code VARCHAR 50 символов
+description VARCHAR без ограничений
+discount INT от 1% до 100%
+created_at DATE авто
+expiration_date DATE не раньше следующего дня
+
+10) client_log связан с одной записью client
+id INT PK
+action VARCHAR без ограничений
+created_at DATETIME авто
+client_id INT для связи с таблицей client
