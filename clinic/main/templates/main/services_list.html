@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}Услуги{% endblock %}
+
+{% block content %}
+  <h1>Список услуг!</h1>
+  {% regroup object_list by category_name as category_list %}
+  <ul>
+    {% for category in category_list %}
+      <li>
+        <h2>{{ category.grouper }}</h2>
+        <ul>
+          {% for service in category.list %}
+            <li>
+              <strong>{{ service.title }}</strong> - <strong>{{ service.category_name }}</strong>
+            </li>
+          {% endfor %}
+        </ul>
+      </li>
+    {% endfor %}
+  </ul>
+{% endblock %}
