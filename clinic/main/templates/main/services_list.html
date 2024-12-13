@@ -12,7 +12,10 @@
         <ul>
           {% for service in category.list %}
             <li>
-              <strong>{{ service.title }}</strong> - <strong>{{ service.category_name }}</strong>
+              <strong>{{ service.title }}</strong> - <strong>{{ service.price }} $</strong>
+              <p>{{ service.description }}</p>
+              <a href="{% url 'update_service' service.pk %}">Изменить</a>
+              <a href="{% url 'delete_service' service.pk %}">Удалить</a>
             </li>
           {% endfor %}
         </ul>

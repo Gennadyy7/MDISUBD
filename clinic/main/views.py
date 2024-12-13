@@ -1,11 +1,11 @@
 from django.db import connection
 from django.db.transaction import commit
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render
 from django.urls import reverse_lazy
-from django.views.generic import TemplateView, ListView, CreateView, UpdateView
+from django.views.generic import TemplateView, ListView, CreateView, UpdateView, DeleteView
 
-from main.forms import AddServiceForm
+from main.forms import AddServiceForm, AddCategoryForm
 from main.models import Services, ServiceCategories
 
 plpgsql_function = ('''
@@ -34,6 +34,15 @@ insert_query = ("""
 update_query = ("""
                 UPDATE main_services
                 SET title = %s, description = %s, price = %s, category_id = %s
+                WHERE id = %s;
+                """)
+insert_category_query = ("""
+                INSERT INTO main_servicecategories (name, specialization_id)
+                VALUES (%s, %s);
+                """)
+update_category_query = ("""
+                UPDATE main_servicecategories
+                SET name = %s, specialization_id = %s
                 WHERE id = %s;
                 """)
 
@@ -105,6 +114,26 @@ class UpdateService(UpdateView):
         'title': 'Редактирование услуги',
     }
 
+    def get_object(self, queryset=None):
+        try:
+            pk = self.kwargs.get('pk')
+            raw_object = Services.objects.raw('''
+                        SELECT
+                            s.id,
+                            s.title,
+                            s.description,
+                            s.price,
+                            s.category_id
+                        FROM main_services s
+                        WHERE s.id = %s;
+                    ''', [pk])
+            service = next(iter(raw_object), None)
+            if not service:
+                raise Http404('Объект service не был найден')
+        except Exception as e:
+            raise Http404(f'Ошибка получения объекта для update: {e}')
+        return service
+
     def form_valid(self, form):
         title = form.cleaned_data.get('title')
         description = form.cleaned_data.get('description')
@@ -135,5 +164,149 @@ class UpdateService(UpdateView):
         except Exception as e:
             form.add_error(None, f"Database update error: {e}")
             return self.form_invalid(form)
+
+        return HttpResponseRedirect(str(self.success_url))
+
+class DeleteService(DeleteView):
+    model = Services
+    success_url = reverse_lazy('services')
+
+    def get_object(self, queryset=None):
+        try:
+            pk = self.kwargs.get('pk')
+            raw_object = Services.objects.raw('''
+                        SELECT
+                            s.id,
+                            s.title,
+                            s.description,
+                            s.price,
+                            s.category_id
+                        FROM main_services s
+                        WHERE s.id = %s;
+                    ''', [pk])
+            service = next(iter(raw_object), None)
+            if not service:
+                raise Http404('Объект service не был найден')
+        except Exception as e:
+            raise Http404(f'Ошибка получения объекта для delete: {e}')
+        return service
+
+    def get(self, request, *args, **kwargs):
+        service = self.get_object()
+        service_id = service.pk
+        delete_query = '''DELETE FROM main_services WHERE id = %s'''
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(delete_query, [service_id])
+        except Exception as e:
+            return Http404(f'Database delete error: {e}')
+
+        return HttpResponseRedirect(str(self.success_url))
+
+class CategoriesList(ListView):
+    model = ServiceCategories
+
+    def get_queryset(self):
+        ss = ServiceCategories.objects.raw('''
+            SELECT
+                sc.id,
+                sc.name,
+                sp.name AS specialization_name
+            FROM main_servicecategories sc
+            INNER JOIN main_specializations sp ON sc.specialization_id = sp.id
+            ORDER BY sc.name;
+        ''')
+        return ss
+
+class AddCategory(CreateView):
+    form_class = AddCategoryForm
+    template_name = 'main/categories_form.html'
+    success_url = reverse_lazy('categories')
+    extra_context = {
+        'title': 'Добавление категории',
+    }
+
+    def form_valid(self, form):
+        category = form.save(commit=False)
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(insert_category_query, [category.name, category.specialization.pk])
+        except Exception as e:
+            form.add_error(None, f"Database insertion error: {e}")
+            return self.form_invalid(form)
+
+        return HttpResponseRedirect(str(self.success_url))
+
+class UpdateCategory(UpdateView):
+    model = ServiceCategories
+    form_class = AddCategoryForm
+    template_name = 'main/categories_form.html'
+    success_url = reverse_lazy('categories')
+    extra_context = {
+        'title': 'Редактирование категории',
+    }
+
+    def get_object(self, queryset=None):
+        try:
+            pk = self.kwargs.get('pk')
+            raw_object = ServiceCategories.objects.raw('''
+                        SELECT
+                            sc.id,
+                            sc.name,
+                            sc.specialization_id
+                        FROM main_servicecategories sc
+                        WHERE sc.id = %s;
+                    ''', [pk])
+            category = next(iter(raw_object), None)
+            if not category:
+                raise Http404('Объект category не был найден')
+        except Exception as e:
+            raise Http404(f'Ошибка получения объекта для update: {e}')
+        return category
+
+    def form_valid(self, form):
+        category = form.save(commit=False)
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(update_category_query, [category.name, category.specialization.pk, category.pk])
+        except Exception as e:
+            form.add_error(None, f"Database update error: {e}")
+            return self.form_invalid(form)
+
+        return HttpResponseRedirect(str(self.success_url))
+
+class DeleteCategory(DeleteView):
+    model = ServiceCategories
+    success_url = reverse_lazy('categories')
+
+    def get_object(self, queryset=None):
+        try:
+            pk = self.kwargs.get('pk')
+            raw_object = ServiceCategories.objects.raw('''
+                        SELECT
+                            sc.id,
+                            sc.name,
+                            sc.specialization_id
+                        FROM main_servicecategories sc
+                        WHERE sc.id = %s;
+                    ''', [pk])
+            category = next(iter(raw_object), None)
+            if not category:
+                raise Http404('Объект category не был найден')
+        except Exception as e:
+            raise Http404(f'Ошибка получения объекта для update: {e}')
+        return category
+
+    def get(self, request, *args, **kwargs):
+        category = self.get_object()
+        category_id = category.pk
+        delete_query = '''DELETE FROM main_servicecategories WHERE id = %s'''
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(delete_query, [category_id])
+        except Exception as e:
+            return Http404(f'Database delete error: {e}')
 
         return HttpResponseRedirect(str(self.success_url))

@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}Категории услуг{% endblock %}
+
+{% block content %}
+  <h1>Список категорий!</h1>
+  <ul>
+    {% for category in object_list %}
+      <li>
+          <strong>{{ category.name }}</strong> - <strong>{{ category.specialization_name }}</strong>
+          <a href="{% url 'update_category' category.pk %}">Изменить</a>
+          <a href="{% url 'delete_category' category.pk %}">Удалить</a>
+      </li>
+    {% endfor %}
+  </ul>
+{% endblock %}

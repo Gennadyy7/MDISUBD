@@ -18,9 +18,12 @@
                     <select id="page-select" onchange="handleNavigation(this)">
                         <option value="">Выберите...</option>
                         <option value="{% url 'home' %}">Главная</option>
+
                         <option value="{% url 'services' %}">Услуги</option>
                         <option value="{% url 'add_service' %}">Добавить услугу</option>
-<!--                        <option value="{% url 'update_service' 1 %}">Редактировать услугу</option>-->
+
+                        <option value="{% url 'categories' %}">Категории услуг</option>
+                        <option value="{% url 'add_category' %}">Добавить категорию услуг</option>
                     </select>
                 </div>
             </nav>
