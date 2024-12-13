@@ -18,4 +18,8 @@ urlpatterns = [
     path('specializations/add/', views.AddSpecialization.as_view(), name='add_specialization'),
     path('specializations/update/<int:pk>/', views.UpdateSpecialization.as_view(), name='update_specialization'),
     path('specializations/delete/<int:pk>/', views.DeleteSpecialization.as_view(), name='delete_specialization'),
+
+    path('doctors/', views.DoctorsList.as_view(), name='doctors'),
+    path('doctors/add/user/', views.AddUserForDoctor.as_view(), name='add_user_for_doctor'),
+    path('doctors/add/doctor/', views.AddDoctor.as_view(), name='add_doctor'),
 ]

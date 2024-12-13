@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}Врачи{% endblock %}
+
+{% block content %}
+  <h1>Список врачей!</h1>
+  <ul>
+    {% for doctor in object_list %}
+      <li>
+          <strong>{{ doctor.user.last_name }}</strong> - <strong>{{ doctor.user.first_name }}</strong> - <strong>{{ doctor.user.patronymic }}</strong>
+          <p>{{ doctor.specialization }}</p>
+          <p>{{ doctor.office_phone }}</p>
+      </li>
+    {% endfor %}
+  </ul>
+{% endblock %}

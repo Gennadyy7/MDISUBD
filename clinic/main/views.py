@@ -5,8 +5,8 @@ from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView, ListView, CreateView, UpdateView, DeleteView
 
-from main.forms import AddServiceForm, AddCategoryForm, AddSpecializationForm
-from main.models import Services, ServiceCategories, Specializations
+from main.forms import AddServiceForm, AddCategoryForm, AddSpecializationForm, AddUserForm, AddDoctorForm
+from main.models import Services, ServiceCategories, Specializations, Doctors
 
 plpgsql_function = ('''
                         CREATE OR REPLACE FUNCTION validate_service_data(
@@ -426,3 +426,22 @@ class DeleteSpecialization(DeleteView):
             return Http404(f'Database delete error: {e}')
 
         return HttpResponseRedirect(str(self.success_url))
+
+class DoctorsList(ListView):
+    model = Doctors
+
+class AddUserForDoctor(CreateView):
+    form_class = AddUserForm
+    template_name = 'main/users_form.html'
+    success_url = reverse_lazy('doctors')
+    extra_context = {
+        'title': 'Добавление пользователя',
+    }
+
+class AddDoctor(CreateView):
+    form_class = AddDoctorForm
+    template_name = 'main/doctors_form.html'
+    success_url = reverse_lazy('doctors')
+    extra_context = {
+        'title': 'Добавление врача',
+    }
