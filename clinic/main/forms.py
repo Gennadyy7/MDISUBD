@@ -1,6 +1,6 @@
 from django import forms
 
-from main.models import Services, ServiceCategories
+from main.models import Services, ServiceCategories, Specializations
 
 
 class AddServiceForm(forms.ModelForm):
@@ -12,3 +12,8 @@ class AddCategoryForm(forms.ModelForm):
     class Meta:
         model = ServiceCategories
         fields = ['name', 'specialization']
+
+class AddSpecializationForm(forms.ModelForm):
+    class Meta:
+        model = Specializations
+        fields = ['name', 'description']

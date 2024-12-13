@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}Специализации врачей{% endblock %}
+
+{% block content %}
+  <h1>Список специализаций!</h1>
+  <ul>
+    {% for specialization in object_list %}
+      <li>
+          <strong>{{ specialization.name }}</strong>
+          <p>{{ specialization.description }}</p>
+          <a href="{% url 'update_specialization' specialization.pk %}">Изменить</a>
+          <a href="{% url 'delete_specialization' specialization.pk %}">Удалить</a>
+      </li>
+    {% endfor %}
+  </ul>
+{% endblock %}

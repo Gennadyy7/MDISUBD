@@ -5,8 +5,8 @@ from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView, ListView, CreateView, UpdateView, DeleteView
 
-from main.forms import AddServiceForm, AddCategoryForm
-from main.models import Services, ServiceCategories
+from main.forms import AddServiceForm, AddCategoryForm, AddSpecializationForm
+from main.models import Services, ServiceCategories, Specializations
 
 plpgsql_function = ('''
                         CREATE OR REPLACE FUNCTION validate_service_data(
@@ -43,6 +43,15 @@ insert_category_query = ("""
 update_category_query = ("""
                 UPDATE main_servicecategories
                 SET name = %s, specialization_id = %s
+                WHERE id = %s;
+                """)
+insert_specialization_query = ("""
+                INSERT INTO main_specializations (name, description)
+                VALUES (%s, %s);
+                """)
+update_specialization_query = ("""
+                UPDATE main_specializations
+                SET name = %s, description = %s
                 WHERE id = %s;
                 """)
 
@@ -295,7 +304,7 @@ class DeleteCategory(DeleteView):
             if not category:
                 raise Http404('Объект category не был найден')
         except Exception as e:
-            raise Http404(f'Ошибка получения объекта для update: {e}')
+            raise Http404(f'Ошибка получения объекта для delete: {e}')
         return category
 
     def get(self, request, *args, **kwargs):
@@ -306,6 +315,113 @@ class DeleteCategory(DeleteView):
         try:
             with connection.cursor() as cursor:
                 cursor.execute(delete_query, [category_id])
+        except Exception as e:
+            return Http404(f'Database delete error: {e}')
+
+        return HttpResponseRedirect(str(self.success_url))
+
+class SpecializationsList(ListView):
+    model = Specializations
+
+    def get_queryset(self):
+        return Specializations.objects.raw('''
+            SELECT
+                sp.id,
+                sp.name,
+                sp.description
+            FROM main_specializations sp
+            ORDER BY sp.name;
+        ''')
+
+class AddSpecialization(CreateView):
+    form_class = AddSpecializationForm
+    template_name = 'main/specializations_form.html'
+    success_url = reverse_lazy('specializations')
+    extra_context = {
+        'title': 'Добавление специализации',
+    }
+
+    def form_valid(self, form):
+        specialization = form.save(commit=False)
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(insert_specialization_query, [specialization.name, specialization.description])
+        except Exception as e:
+            form.add_error(None, f"Database insertion error: {e}")
+            return self.form_invalid(form)
+
+        return HttpResponseRedirect(str(self.success_url))
+
+class UpdateSpecialization(UpdateView):
+    model = Specializations
+    form_class = AddSpecializationForm
+    template_name = 'main/specializations_form.html'
+    success_url = reverse_lazy('specializations')
+    extra_context = {
+        'title': 'Редактирование специализации',
+    }
+
+    def get_object(self, queryset=None):
+        try:
+            pk = self.kwargs.get('pk')
+            raw_object = Specializations.objects.raw('''
+                        SELECT
+                            sp.id,
+                            sp.name,
+                            sp.description
+                        FROM main_specializations sp
+                        WHERE sp.id = %s;
+                    ''', [pk])
+            specialization = next(iter(raw_object), None)
+            if not specialization:
+                raise Http404('Объект specialization не был найден')
+        except Exception as e:
+            raise Http404(f'Ошибка получения объекта для update: {e}')
+        return specialization
+
+    def form_valid(self, form):
+        specialization = form.save(commit=False)
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(update_specialization_query, [specialization.name, specialization.description, specialization.pk])
+        except Exception as e:
+            form.add_error(None, f"Database update error: {e}")
+            return self.form_invalid(form)
+
+        return HttpResponseRedirect(str(self.success_url))
+
+class DeleteSpecialization(DeleteView):
+    model = Specializations
+    success_url = reverse_lazy('specializations')
+
+    def get_object(self, queryset=None):
+        try:
+            pk = self.kwargs.get('pk')
+            raw_object = Specializations.objects.raw('''
+                        SELECT
+                            sp.id,
+                            sp.name,
+                            sp.description
+                        FROM main_specializations sp
+                        WHERE sp.id = %s;
+                    ''', [pk])
+            specialization = next(iter(raw_object), None)
+            if not specialization:
+                raise Http404('Объект specialization не был найден')
+        except Exception as e:
+            raise Http404(f'Ошибка получения объекта для delete: {e}')
+        return specialization
+
+    def get(self, request, *args, **kwargs):
+        specialization = self.get_object()
+        specialization_id = specialization.pk
+        # delete_related_query = '''DELETE FROM main_servicecategories WHERE specialization_id = %s'''
+        delete_query = '''DELETE FROM main_specializations WHERE id = %s'''
+
+        try:
+            with connection.cursor() as cursor:
+                # cursor.execute(delete_related_query, [specialization_id])
+                cursor.execute(delete_query, [specialization_id])
         except Exception as e:
             return Http404(f'Database delete error: {e}')
 

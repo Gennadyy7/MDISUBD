@@ -13,4 +13,9 @@ urlpatterns = [
     path('categories/add/', views.AddCategory.as_view(), name='add_category'),
     path('categories/update/<int:pk>/', views.UpdateCategory.as_view(), name='update_category'),
     path('categories/delete/<int:pk>/', views.DeleteCategory.as_view(), name='delete_category'),
+
+    path('specializations/', views.SpecializationsList.as_view(), name='specializations'),
+    path('specializations/add/', views.AddSpecialization.as_view(), name='add_specialization'),
+    path('specializations/update/<int:pk>/', views.UpdateSpecialization.as_view(), name='update_specialization'),
+    path('specializations/delete/<int:pk>/', views.DeleteSpecialization.as_view(), name='delete_specialization'),
 ]
