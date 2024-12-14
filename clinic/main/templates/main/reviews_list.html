@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}Отзывы{% endblock %}
+
+{% block content %}
+  <h1>Список отзывов!</h1>
+  <ul>
+    {% for review in object_list %}
+      <li>
+          <strong>{{ review.rating }}</strong> - <strong>{{ review.username }}</strong> - {{ review.last_name }} {{ review.first_name }} {{ review.patronymic }}
+          <pre>{{ review.text }}</pre>
+          <p>{{ review.created_at }}</p>
+      </li>
+    {% endfor %}
+  </ul>
+{% endblock %}

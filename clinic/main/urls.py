@@ -34,4 +34,6 @@ urlpatterns = [
     path('register/', views.RegisterUser.as_view(), name='register'),
 
     path('client_logs/', views.ClientLogsList.as_view(), name='client_logs'),
+
+    path('reviews/', views.ReviewsList.as_view(), name='reviews'),
 ]

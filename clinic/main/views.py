@@ -10,7 +10,7 @@ from django.views.generic import TemplateView, ListView, CreateView, UpdateView,
 
 from main.forms import AddServiceForm, AddCategoryForm, AddSpecializationForm, AddUserForm, AddDoctorForm, \
     AddPromocodeForm, AddUserForClientForm
-from main.models import Services, ServiceCategories, Specializations, Doctors, Promocodes, Clients, ClientLogs
+from main.models import Services, ServiceCategories, Specializations, Doctors, Promocodes, Clients, ClientLogs, Reviews
 
 plpgsql_function = ('''
                         CREATE OR REPLACE FUNCTION validate_service_data(
@@ -790,3 +790,26 @@ class ClientLogsList(ListView):
             JOIN main_user u ON u.id = cl.user_id
             ORDER BY cll.created_at DESC;
         ''')
+
+class ReviewsList(ListView):
+    model = Reviews
+
+    def get_queryset(self):
+        ss = Reviews.objects.raw('''
+            SELECT
+                r.id,
+                r.rating,
+                r.text,
+                r.created_at,
+                u.username,
+                u2.first_name,
+                u2.last_name,
+                u2.patronymic
+            FROM main_reviews r
+            INNER JOIN main_clients cl ON cl.id = r.client_id
+            INNER JOIN main_user u ON u.id = cl.user_id
+            INNER JOIN main_doctors d ON d.id = r.doctor_id
+            INNER JOIN main_user u2 ON u2.id = d.user_id
+            ORDER BY r.created_at DESC;
+        ''')
+        return ss
