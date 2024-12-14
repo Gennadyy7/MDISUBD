@@ -874,3 +874,41 @@ class AddReview(CreateView):
             return self.form_invalid(form)
 
         return HttpResponseRedirect(str(self.success_url))
+
+class DeleteReview(DeleteView):
+    model = Reviews
+    success_url = reverse_lazy('reviews')
+
+    def get_object(self, queryset=None):
+        try:
+            pk = self.kwargs.get('pk')
+            raw_object = Reviews.objects.raw('''
+                        SELECT
+                            r.id,
+                            r.client_id,
+                            r.doctor_id,
+                            r.rating,
+                            r.text,
+                            r.created_at
+                        FROM main_reviews r
+                        WHERE r.id = %s;
+                    ''', [pk])
+            review = next(iter(raw_object), None)
+            if not review:
+                raise Http404('Объект review не был найден')
+        except Exception as e:
+            raise Http404(f'Ошибка получения объекта для delete: {e}')
+        return review
+
+    def get(self, request, *args, **kwargs):
+        review = self.get_object()
+        review_id = review.pk
+        delete_query = '''DELETE FROM main_reviews WHERE id = %s'''
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(delete_query, [review_id])
+        except Exception as e:
+            return Http404(f'Database delete error: {e}')
+
+        return HttpResponseRedirect(str(self.success_url))
