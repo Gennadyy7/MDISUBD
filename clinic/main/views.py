@@ -9,7 +9,7 @@ from django.urls import reverse_lazy
 from django.views.generic import TemplateView, ListView, CreateView, UpdateView, DeleteView
 
 from main.forms import AddServiceForm, AddCategoryForm, AddSpecializationForm, AddUserForm, AddDoctorForm, \
-    AddPromocodeForm, AddUserForClientForm
+    AddPromocodeForm, AddUserForClientForm, AddReviewForm
 from main.models import Services, ServiceCategories, Specializations, Doctors, Promocodes, Clients, ClientLogs, Reviews
 
 plpgsql_function = ('''
@@ -144,6 +144,24 @@ plpgsql_client_validation = (r'''
                         $$ LANGUAGE plpgsql;
                         ''')
 client_validation_query = "SELECT validate_client_data(%s, %s);"
+plpgsql_review_validation = ('''
+                        CREATE OR REPLACE FUNCTION validate_review_data(
+                            r_rating INTEGER
+                        ) RETURNS TEXT AS $$
+                        BEGIN
+                            IF r_rating < 1 OR r_rating > 5 THEN
+                                RETURN 'Rating can be from 1 to 5';
+                            END IF;
+
+                            RETURN 'OK';
+                        END;
+                        $$ LANGUAGE plpgsql;
+                        ''')
+review_validation_query = "SELECT validate_review_data(%s);"
+insert_review_query = ("""
+                INSERT INTO main_reviews (client_id, doctor_id, text, rating, created_at)
+                VALUES (%s, %s, %s, %s, NOW());
+                """)
 
 class Index(TemplateView):
     template_name = 'main/index.html'
@@ -813,3 +831,46 @@ class ReviewsList(ListView):
             ORDER BY r.created_at DESC;
         ''')
         return ss
+
+class AddReview(CreateView):
+    form_class = AddReviewForm
+    template_name = 'main/reviews_form.html'
+    success_url = reverse_lazy('reviews')
+    extra_context = {
+        'title': 'Добавление отзыва',
+    }
+
+    def form_valid(self, form):
+        rating = form.cleaned_data.get('rating')
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(plpgsql_review_validation)
+
+            with connection.cursor() as cursor:
+                cursor.execute(review_validation_query, [rating])
+                validation_result = cursor.fetchone()[0]
+
+            if validation_result != 'OK':
+                form.add_error(None, validation_result)
+                return self.form_invalid(form)
+
+        except Exception as e:
+            form.add_error(None, f"Database error: {e}")
+            return self.form_invalid(form)
+
+        review = form.save(commit=False)
+        try:
+            review.client = self.request.user.client
+        except Exception:
+            form.add_error(None, "Только клиенты могут оставить отзыв!!!")
+            return self.form_invalid(form)
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(insert_review_query, [review.client.pk, review.doctor.pk, review.text, review.rating])
+        except Exception as e:
+            form.add_error(None, f"Database insertion error: {e}")
+            return self.form_invalid(form)
+
+        return HttpResponseRedirect(str(self.success_url))

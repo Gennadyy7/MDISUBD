@@ -36,4 +36,5 @@ urlpatterns = [
     path('client_logs/', views.ClientLogsList.as_view(), name='client_logs'),
 
     path('reviews/', views.ReviewsList.as_view(), name='reviews'),
+    path('reviews/add/', views.AddReview.as_view(), name='add_review'),
 ]

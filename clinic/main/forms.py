@@ -1,6 +1,6 @@
 from django import forms
 
-from main.models import Services, ServiceCategories, Specializations, User, Doctors, Promocodes
+from main.models import Services, ServiceCategories, Specializations, User, Doctors, Promocodes, Reviews
 
 
 class AddServiceForm(forms.ModelForm):
@@ -65,3 +65,8 @@ class AddPromocodeForm(forms.ModelForm):
         widgets = {
             'expiration_date': forms.DateInput(format='%d-%m-%Y', attrs={'type': 'date'}),
         }
+
+class AddReviewForm(forms.ModelForm):
+    class Meta:
+        model = Reviews
+        fields = ['doctor', 'rating', 'text']
