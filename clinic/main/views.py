@@ -10,7 +10,7 @@ from django.views.generic import TemplateView, ListView, CreateView, UpdateView,
 
 from main.forms import AddServiceForm, AddCategoryForm, AddSpecializationForm, AddUserForm, AddDoctorForm, \
     AddPromocodeForm, AddUserForClientForm
-from main.models import Services, ServiceCategories, Specializations, Doctors, Promocodes, Clients
+from main.models import Services, ServiceCategories, Specializations, Doctors, Promocodes, Clients, ClientLogs
 
 plpgsql_function = ('''
                         CREATE OR REPLACE FUNCTION validate_service_data(
@@ -771,3 +771,22 @@ class RegisterUser(AddUserForDoctor):
         client.save()
 
         return HttpResponseRedirect(str(self.success_url))
+
+class ClientLogsList(ListView):
+    model = ClientLogs
+
+    def get_queryset(self):
+        return ClientLogs.objects.raw('''
+            SELECT
+                cll.id,
+                cll.action,
+                cll.created_at,
+                u.username,
+                u.first_name,
+                u.last_name,
+                u.patronymic
+            FROM main_clientlogs cll
+            JOIN main_clients cl ON cl.id = cll.client_id
+            JOIN main_user u ON u.id = cl.user_id
+            ORDER BY cll.created_at DESC;
+        ''')

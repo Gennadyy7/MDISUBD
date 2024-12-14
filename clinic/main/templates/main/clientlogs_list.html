@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Журнал логов{% endblock %}
+
+{% block content %}
+  <h1>Список логов!</h1>
+  <ul>
+    {% for log in object_list %}
+      <li>
+          <strong>{{ log.created_at }}</strong> - <strong>{{ log.action }}</strong> - <strong>{{ log.username }}</strong>
+          <p>{{ log.last_name }} {{ log.first_name }} {{ log.patronymic }}</p>
+      </li>
+    {% endfor %}
+  </ul>
+{% endblock %}

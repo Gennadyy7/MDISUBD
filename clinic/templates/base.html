@@ -34,6 +34,8 @@
 
                         <option value="{% url 'promocodes' %}">Промокоды</option>
                         <option value="{% url 'add_promocode' %}">Добавить промокод</option>
+
+                        <option value="{% url 'client_logs' %}">Пользовательские логи</option>
                     </select>
                     <label for="users-select">Пользователи:</label>
                     <select id="users-select" onchange="handleNavigation(this)">
