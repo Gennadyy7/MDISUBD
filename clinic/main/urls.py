@@ -24,4 +24,9 @@ urlpatterns = [
     path('doctors/add/doctor/', views.AddDoctor.as_view(), name='add_doctor'),
     path('doctors/update/<int:pk>/', views.UpdateDoctor.as_view(), name='update_doctor'),
     path('doctors/delete/<int:pk>/', views.DeleteDoctor.as_view(), name='delete_doctor'),
+
+    path('promocodes/', views.PromocodesList.as_view(), name='promocodes'),
+    path('promocodes/add/', views.AddPromocode.as_view(), name='add_promocode'),
+    # path('promocodes/update/<int:pk>/', views.UpdatePromocode.as_view(), name='update_promocode'),
+    # path('promocodes/delete/<int:pk>/', views.DeletePromocode.as_view(), name='delete_promocode'),
 ]

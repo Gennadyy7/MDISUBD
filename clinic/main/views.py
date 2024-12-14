@@ -5,8 +5,9 @@ from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView, ListView, CreateView, UpdateView, DeleteView
 
-from main.forms import AddServiceForm, AddCategoryForm, AddSpecializationForm, AddUserForm, AddDoctorForm
-from main.models import Services, ServiceCategories, Specializations, Doctors
+from main.forms import AddServiceForm, AddCategoryForm, AddSpecializationForm, AddUserForm, AddDoctorForm, \
+    AddPromocodeForm
+from main.models import Services, ServiceCategories, Specializations, Doctors, Promocodes
 
 plpgsql_function = ('''
                         CREATE OR REPLACE FUNCTION validate_service_data(
@@ -87,6 +88,29 @@ plpgsql_doctor_validation = (r'''
                         $$ LANGUAGE plpgsql;
                         ''')
 doctor_validation_query = "SELECT validate_doctor_data(%s);"
+plpgsql_promocode_validation = ('''
+                        CREATE OR REPLACE FUNCTION validate_promocode_data(
+                            pr_discount INTEGER,
+                            pr_expiration_date DATE
+                        ) RETURNS TEXT AS $$
+                        BEGIN
+                            IF pr_discount < 1 OR pr_discount > 100 THEN
+                                RETURN 'Discount must be between 1% and 100%';
+                            END IF;
+                            
+                            IF pr_expiration_date <= CURRENT_DATE THEN
+                                RETURN 'Expiration date must be at least one day in the future';
+                            END IF;
+
+                            RETURN 'OK';
+                        END;
+                        $$ LANGUAGE plpgsql;
+                        ''')
+promocode_validation_query = "SELECT validate_promocode_data(%s, %s);"
+insert_promocode_query = ("""
+                INSERT INTO main_promocodes (code, discount, expiration_date, created_at)
+                VALUES (%s, %s, %s, NOW());
+                """)
 
 class Index(TemplateView):
     template_name = 'main/index.html'
@@ -562,3 +586,58 @@ class DeleteDoctor(DeleteView):
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         return self.form_valid(None)
+
+class PromocodesList(ListView):
+    model = Promocodes
+
+    def get_queryset(self):
+        return Promocodes.objects.raw('''
+            SELECT
+                pr.id,
+                pr.code,
+                pr.discount,
+                pr.expiration_date,
+                pr.created_at
+            FROM main_promocodes pr
+            WHERE pr.expiration_date > CURRENT_DATE
+            ORDER BY pr.code;
+        ''')
+
+class AddPromocode(CreateView):
+    form_class = AddPromocodeForm
+    template_name = 'main/promocodes_form.html'
+    success_url = reverse_lazy('promocodes')
+    extra_context = {
+        'title': 'Добавление промокода',
+    }
+
+    def form_valid(self, form):
+        discount = form.cleaned_data.get('discount')
+        expiration_date = form.cleaned_data.get('expiration_date')
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(plpgsql_promocode_validation)
+
+            with connection.cursor() as cursor:
+                cursor.execute(promocode_validation_query, [discount, expiration_date])
+                validation_result = cursor.fetchone()[0]
+
+            if validation_result != 'OK':
+                form.add_error(None, validation_result)
+                return self.form_invalid(form)
+
+        except Exception as e:
+            form.add_error(None, f"Database error: {e}")
+            return self.form_invalid(form)
+
+        promocode = form.save(commit=False)
+        promocode.code = promocode.code.upper()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(insert_promocode_query, [promocode.code, promocode.discount, promocode.expiration_date])
+        except Exception as e:
+            form.add_error(None, f"Database insertion error: {e}")
+            return self.form_invalid(form)
+
+        return HttpResponseRedirect(str(self.success_url))
