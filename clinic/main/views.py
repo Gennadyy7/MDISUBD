@@ -496,6 +496,8 @@ class AddUserForDoctor(CreateView):
     success_url = reverse_lazy('doctors')
     extra_context = {
         'title': 'Добавление пользователя',
+        'h1_content': 'Форма пользователя',
+        'submit_content': 'Отправить',
     }
 
     def form_valid(self, form):
@@ -517,6 +519,9 @@ class AddUserForDoctor(CreateView):
         except Exception as e:
             form.add_error(None, f"Database error: {e}")
             return self.form_invalid(form)
+
+        user = form.save(commit=False)
+        user.set_password(form.cleaned_data.get('password'))
 
         return super().form_valid(form)
 
@@ -692,3 +697,11 @@ class LoginUser(LoginView):
 def logout_user(request):
     logout(request)
     return redirect('home')
+
+class RegisterUser(AddUserForDoctor):
+    success_url = reverse_lazy('login')
+    extra_context = {
+        'title': 'Регистрация',
+        'h1_content': 'Регистрация',
+        'submit_content': 'Зарегистрироваться'
+    }
