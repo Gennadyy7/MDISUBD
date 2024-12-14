@@ -24,9 +24,13 @@ class AddUserForm(forms.ModelForm):
         fields = ['username', 'password', 'first_name', 'last_name', 'patronymic', 'email', 'phone']
         widgets = {
             'password': forms.PasswordInput(),
+            'phone': forms.TextInput(attrs={'placeholder': '+375 (XX) XXX-XX-XX'})
         }
 
 class AddDoctorForm(forms.ModelForm):
     class Meta:
         model = Doctors
         fields = '__all__'
+        widgets = {
+            'office_phone': forms.TextInput(attrs={'placeholder': '80XX XXX-XX-XX'})
+        }

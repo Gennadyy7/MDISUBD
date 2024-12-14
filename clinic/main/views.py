@@ -54,6 +54,39 @@ update_specialization_query = ("""
                 SET name = %s, description = %s
                 WHERE id = %s;
                 """)
+plpgsql_user_validation = (r'''
+                        CREATE OR REPLACE FUNCTION validate_user_data(
+                            u_email TEXT,
+                            u_phone TEXT
+                        ) RETURNS TEXT AS $$
+                        BEGIN
+                            IF NOT (u_email ~ '^[A-Za-z0-9_]+@[A-Za-z0-9-]+\.[A-Za-z]{2,}$') THEN
+                                RETURN 'Invalid email format';
+                            END IF;
+                            
+                            IF NOT (u_phone ~ '^\+375 \(\d{2}\) \d{3}-\d{2}-\d{2}$') THEN
+                                RETURN 'Invalid phone format';
+                            END IF;
+                            
+                            RETURN 'OK';
+                        END;
+                        $$ LANGUAGE plpgsql;
+                        ''')
+user_validation_query = "SELECT validate_user_data(%s, %s);"
+plpgsql_doctor_validation = (r'''
+                        CREATE OR REPLACE FUNCTION validate_doctor_data(
+                            d_office_phone TEXT
+                        ) RETURNS TEXT AS $$
+                        BEGIN
+                            IF NOT (d_office_phone ~ '^80\d{2} \d{3}-\d{2}-\d{2}$') THEN
+                                RETURN 'Invalid office_phone format';
+                            END IF;
+
+                            RETURN 'OK';
+                        END;
+                        $$ LANGUAGE plpgsql;
+                        ''')
+doctor_validation_query = "SELECT validate_doctor_data(%s);"
 
 class Index(TemplateView):
     template_name = 'main/index.html'
@@ -438,6 +471,28 @@ class AddUserForDoctor(CreateView):
         'title': 'Добавление пользователя',
     }
 
+    def form_valid(self, form):
+        email = form.cleaned_data.get('email')
+        phone = form.cleaned_data.get('phone')
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(plpgsql_user_validation)
+
+            with connection.cursor() as cursor:
+                cursor.execute(user_validation_query, [email, phone])
+                validation_result = cursor.fetchone()[0]
+
+            if validation_result != 'OK':
+                form.add_error(None, validation_result)
+                return self.form_invalid(form)
+
+        except Exception as e:
+            form.add_error(None, f"Database error: {e}")
+            return self.form_invalid(form)
+
+        return super().form_valid(form)
+
 class AddDoctor(CreateView):
     form_class = AddDoctorForm
     template_name = 'main/doctors_form.html'
@@ -445,3 +500,24 @@ class AddDoctor(CreateView):
     extra_context = {
         'title': 'Добавление врача',
     }
+
+    def form_valid(self, form):
+        office_phone = form.cleaned_data.get('office_phone')
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(plpgsql_doctor_validation)
+
+            with connection.cursor() as cursor:
+                cursor.execute(doctor_validation_query, [office_phone])
+                validation_result = cursor.fetchone()[0]
+
+            if validation_result != 'OK':
+                form.add_error(None, validation_result)
+                return self.form_invalid(form)
+
+        except Exception as e:
+            form.add_error(None, f"Database error: {e}")
+            return self.form_invalid(form)
+
+        return super().form_valid(form)
