@@ -8,6 +8,7 @@
     {% for promocode in object_list %}
       <li>
           <strong>{{ promocode.code }}</strong> - <strong>{{ promocode.discount }}%</strong> - <strong>{{ promocode.expiration_date }}</strong>
+          <a href="{% url 'delete_promocode' promocode.pk %}">Удалить</a>
       </li>
     {% endfor %}
   </ul>

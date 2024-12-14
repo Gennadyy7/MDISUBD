@@ -27,6 +27,5 @@ urlpatterns = [
 
     path('promocodes/', views.PromocodesList.as_view(), name='promocodes'),
     path('promocodes/add/', views.AddPromocode.as_view(), name='add_promocode'),
-    # path('promocodes/update/<int:pk>/', views.UpdatePromocode.as_view(), name='update_promocode'),
-    # path('promocodes/delete/<int:pk>/', views.DeletePromocode.as_view(), name='delete_promocode'),
+    path('promocodes/delete/<int:pk>/', views.DeletePromocode.as_view(), name='delete_promocode'),
 ]

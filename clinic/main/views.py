@@ -641,3 +641,40 @@ class AddPromocode(CreateView):
             return self.form_invalid(form)
 
         return HttpResponseRedirect(str(self.success_url))
+
+class DeletePromocode(DeleteView):
+    model = Promocodes
+    success_url = reverse_lazy('promocodes')
+
+    def get_object(self, queryset=None):
+        try:
+            pk = self.kwargs.get('pk')
+            raw_object = Services.objects.raw('''
+                        SELECT
+                            pr.id,
+                            pr.code,
+                            pr.discount,
+                            pr.expiration_date,
+                            pr.created_at
+                        FROM main_promocodes pr
+                        WHERE pr.id = %s;
+                    ''', [pk])
+            promocode = next(iter(raw_object), None)
+            if not promocode:
+                raise Http404('Объект promocode не был найден')
+        except Exception as e:
+            raise Http404(f'Ошибка получения объекта для delete: {e}')
+        return promocode
+
+    def get(self, request, *args, **kwargs):
+        promocode = self.get_object()
+        promocode_id = promocode.pk
+        delete_query = '''DELETE FROM main_promocodes WHERE id = %s'''
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(delete_query, [promocode_id])
+        except Exception as e:
+            return Http404(f'Database delete error: {e}')
+
+        return HttpResponseRedirect(str(self.success_url))
