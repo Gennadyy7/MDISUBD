@@ -521,3 +521,44 @@ class AddDoctor(CreateView):
             return self.form_invalid(form)
 
         return super().form_valid(form)
+
+class UpdateDoctor(UpdateView):
+    model = Doctors
+    form_class = AddDoctorForm
+    template_name = 'main/doctors_form.html'
+    success_url = reverse_lazy('doctors')
+    extra_context = {
+        'title': 'Редактирование врача',
+    }
+
+    def form_valid(self, form):
+        office_phone = form.cleaned_data.get('office_phone')
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(plpgsql_doctor_validation)
+
+            with connection.cursor() as cursor:
+                cursor.execute(doctor_validation_query, [office_phone])
+                validation_result = cursor.fetchone()[0]
+
+            if validation_result != 'OK':
+                form.add_error(None, validation_result)
+                return self.form_invalid(form)
+
+        except Exception as e:
+            form.add_error(None, f"Database error: {e}")
+            return self.form_invalid(form)
+
+        return super().form_valid(form)
+    
+class DeleteDoctor(DeleteView):
+    model = Doctors
+    success_url = reverse_lazy('doctors')
+
+    def get(self, request, *args, **kwargs):
+        return self.post(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        return self.form_valid(None)
