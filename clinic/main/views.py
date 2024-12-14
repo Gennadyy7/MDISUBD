@@ -9,8 +9,8 @@ from django.urls import reverse_lazy
 from django.views.generic import TemplateView, ListView, CreateView, UpdateView, DeleteView
 
 from main.forms import AddServiceForm, AddCategoryForm, AddSpecializationForm, AddUserForm, AddDoctorForm, \
-    AddPromocodeForm
-from main.models import Services, ServiceCategories, Specializations, Doctors, Promocodes
+    AddPromocodeForm, AddUserForClientForm
+from main.models import Services, ServiceCategories, Specializations, Doctors, Promocodes, Clients
 
 plpgsql_function = ('''
                         CREATE OR REPLACE FUNCTION validate_service_data(
@@ -79,18 +79,29 @@ plpgsql_user_validation = (r'''
 user_validation_query = "SELECT validate_user_data(%s, %s);"
 plpgsql_doctor_validation = (r'''
                         CREATE OR REPLACE FUNCTION validate_doctor_data(
-                            d_office_phone TEXT
+                            d_office_phone TEXT,
+                            d_user_id INTEGER
                         ) RETURNS TEXT AS $$
+                        DECLARE
+                            existing_client_count INTEGER;
                         BEGIN
                             IF NOT (d_office_phone ~ '^80\d{2} \d{3}-\d{2}-\d{2}$') THEN
                                 RETURN 'Invalid office_phone format';
+                            END IF;
+
+                            SELECT COUNT(*) INTO existing_client_count
+                            FROM main_clients
+                            WHERE user_id = d_user_id;
+                            
+                            IF existing_client_count > 0 THEN
+                                RETURN 'User is already associated with a client';
                             END IF;
 
                             RETURN 'OK';
                         END;
                         $$ LANGUAGE plpgsql;
                         ''')
-doctor_validation_query = "SELECT validate_doctor_data(%s);"
+doctor_validation_query = "SELECT validate_doctor_data(%s, %s);"
 plpgsql_promocode_validation = ('''
                         CREATE OR REPLACE FUNCTION validate_promocode_data(
                             pr_discount INTEGER,
@@ -114,6 +125,25 @@ insert_promocode_query = ("""
                 INSERT INTO main_promocodes (code, discount, expiration_date, created_at)
                 VALUES (%s, %s, %s, NOW());
                 """)
+plpgsql_client_validation = (r'''
+                        CREATE OR REPLACE FUNCTION validate_client_data(
+                            cl_birth_date DATE,
+                            cl_address TEXT
+                        ) RETURNS TEXT AS $$
+                        BEGIN
+                            IF cl_birth_date > CURRENT_DATE - INTERVAL '18 years' THEN
+                                RETURN 'User must be at least 18 years old';
+                            END IF;
+
+                            IF NOT (cl_address ~ '^ул\. [А-Яа-я]+\, д\. (\d+|\d+\/\d+)\, кв\. \d+$') THEN
+                                RETURN 'Invalid address format';
+                            END IF;
+
+                            RETURN 'OK';
+                        END;
+                        $$ LANGUAGE plpgsql;
+                        ''')
+client_validation_query = "SELECT validate_client_data(%s, %s);"
 
 class Index(TemplateView):
     template_name = 'main/index.html'
@@ -535,13 +565,14 @@ class AddDoctor(CreateView):
 
     def form_valid(self, form):
         office_phone = form.cleaned_data.get('office_phone')
+        user = form.cleaned_data.get('user')
 
         try:
             with connection.cursor() as cursor:
                 cursor.execute(plpgsql_doctor_validation)
 
             with connection.cursor() as cursor:
-                cursor.execute(doctor_validation_query, [office_phone])
+                cursor.execute(doctor_validation_query, [office_phone, user.pk])
                 validation_result = cursor.fetchone()[0]
 
             if validation_result != 'OK':
@@ -699,9 +730,44 @@ def logout_user(request):
     return redirect('home')
 
 class RegisterUser(AddUserForDoctor):
+    form_class = AddUserForClientForm
     success_url = reverse_lazy('login')
     extra_context = {
         'title': 'Регистрация',
         'h1_content': 'Регистрация',
         'submit_content': 'Зарегистрироваться'
     }
+
+    def form_valid(self, form):
+        super().form_valid(form)
+        if form.errors:
+            return self.form_invalid(form)
+
+        birth_date = form.cleaned_data.get('birth_date')
+        address = form.cleaned_data.get('address')
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(plpgsql_client_validation)
+
+            with connection.cursor() as cursor:
+                cursor.execute(client_validation_query, [birth_date, address])
+                validation_result = cursor.fetchone()[0]
+
+            if validation_result != 'OK':
+                form.add_error(None, validation_result)
+                return self.form_invalid(form)
+
+        except Exception as e:
+            form.add_error(None, f"Database error: {e}")
+            return self.form_invalid(form)
+
+        user = form.save(commit=False)
+        client = Clients(
+            user=user,
+            birth_date=birth_date,
+            address=address
+        )
+        client.save()
+
+        return HttpResponseRedirect(str(self.success_url))

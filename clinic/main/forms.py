@@ -27,6 +27,26 @@ class AddUserForm(forms.ModelForm):
             'phone': forms.TextInput(attrs={'placeholder': '+375 (XX) XXX-XX-XX'})
         }
 
+class AddUserForClientForm(forms.ModelForm):
+    birth_date = forms.DateField(
+        required=True,
+        widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'})
+    )
+    address = forms.CharField(
+        required=True,
+        max_length=255,
+        widget=forms.TextInput(attrs={
+            'placeholder': 'ул. Иваново, д. 111/11, кв. 11',
+            'style': 'width: 200px;',})
+    )
+    class Meta:
+        model = User
+        fields = ['username', 'password', 'first_name', 'last_name', 'patronymic', 'email', 'phone', 'birth_date', 'address']
+        widgets = {
+            'password': forms.PasswordInput(),
+            'phone': forms.TextInput(attrs={'placeholder': '+375 (XX) XXX-XX-XX'})
+        }
+
 class AddDoctorForm(forms.ModelForm):
     class Meta:
         model = Doctors
