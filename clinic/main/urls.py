@@ -28,4 +28,7 @@ urlpatterns = [
     path('promocodes/', views.PromocodesList.as_view(), name='promocodes'),
     path('promocodes/add/', views.AddPromocode.as_view(), name='add_promocode'),
     path('promocodes/delete/<int:pk>/', views.DeletePromocode.as_view(), name='delete_promocode'),
+
+    path('login/', views.LoginUser.as_view(), name='login'),
+    path('logout/', views.logout_user, name='logout'),
 ]

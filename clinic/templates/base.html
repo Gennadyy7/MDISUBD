@@ -35,6 +35,15 @@
                         <option value="{% url 'promocodes' %}">Промокоды</option>
                         <option value="{% url 'add_promocode' %}">Добавить промокод</option>
                     </select>
+                    <label for="users-select">Пользователи:</label>
+                    <select id="users-select" onchange="handleNavigation(this)">
+                        <option value="">Выберите...</option>
+                        {% if user.is_authenticated %}
+                            <option value="{% url 'logout' %}">Выйти</option>
+                        {% else %}
+                            <option value="{% url 'login' %}">Войти</option>
+                        {% endif %}
+                    </select>
                 </div>
             </nav>
         </div>

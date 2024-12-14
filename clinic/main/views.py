@@ -1,7 +1,10 @@
+from django.contrib.auth import logout
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.views import LoginView, LogoutView
 from django.db import connection
 from django.db.transaction import commit
 from django.http import HttpResponseRedirect, Http404
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView, ListView, CreateView, UpdateView, DeleteView
 
@@ -678,3 +681,14 @@ class DeletePromocode(DeleteView):
             return Http404(f'Database delete error: {e}')
 
         return HttpResponseRedirect(str(self.success_url))
+
+class LoginUser(LoginView):
+    form_class = AuthenticationForm
+    template_name = 'main/login.html'
+    extra_context = {
+        'title': 'Авторизация',
+    }
+
+def logout_user(request):
+    logout(request)
+    return redirect('home')
