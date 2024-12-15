@@ -10,7 +10,8 @@ from django.views.generic import TemplateView, ListView, CreateView, UpdateView,
 
 from main.forms import AddServiceForm, AddCategoryForm, AddSpecializationForm, AddUserForm, AddDoctorForm, \
     AddPromocodeForm, AddUserForClientForm, AddReviewForm
-from main.models import Services, ServiceCategories, Specializations, Doctors, Promocodes, Clients, ClientLogs, Reviews
+from main.models import Services, ServiceCategories, Specializations, Doctors, Promocodes, Clients, ClientLogs, Reviews, \
+    Orders
 
 plpgsql_function = ('''
                         CREATE OR REPLACE FUNCTION validate_service_data(
@@ -912,3 +913,53 @@ class DeleteReview(DeleteView):
             return Http404(f'Database delete error: {e}')
 
         return HttpResponseRedirect(str(self.success_url))
+
+class OrdersList(ListView):
+    model = Orders
+    template_name = 'main/orders_list.html'
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if hasattr(user, 'client'):
+            sql = ('''
+                    SELECT
+                        o.id,
+                        u.first_name,
+                        u.last_name,
+                        u.patronymic,
+                        p.discount,
+                        o.total_price,
+                        o.appointment_date,
+                        STRING_AGG(s.title, ', ') AS services
+                    FROM main_orders o
+                    LEFT JOIN main_promocodes p ON p.id = o.promocode_id
+                    INNER JOIN main_doctors d ON d.id = o.doctor_id
+                    INNER JOIN main_user u ON u.id = d.user_id
+                    INNER JOIN main_orders_services os ON os.orders_id = o.id
+                    INNER JOIN main_services s ON s.id = os.services_id
+                    WHERE o.client_id = %s
+                    GROUP BY o.id, u.first_name, u.last_name, u.patronymic, p.discount, o.total_price, o.appointment_date;
+                    ''')
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute(sql, [user.client.pk])
+                    orders = cursor.fetchall()
+            except Exception as e:
+                raise Http404(f'Ошибка при попытке получения выборки заказов: {e}')
+            order_list = []
+            for order in orders:
+                order_dict = {
+                    'id': order[0],
+                    'first_name': order[1],
+                    'last_name': order[2],
+                    'patronymic': order[3],
+                    'discount': str(order[4]) + '%' if order[4] else 'Нет',
+                    'total_price': order[5],
+                    'appointment_date': order[6],
+                    'services': order[7],
+                }
+                order_list.append(order_dict)
+            return order_list
+
+        return Orders.objects.none()

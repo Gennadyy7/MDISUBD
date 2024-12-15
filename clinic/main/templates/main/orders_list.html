@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}Заказы{% endblock %}
+
+{% block content %}
+  <h1>Ваши заказы!</h1>
+  <ul>
+    {% for order in object_list %}
+      <li>
+          <strong>Заказ номер {{ order.id }}</strong>
+          <p>К врачу (ФИО): {{ order.last_name }} {{ order.first_name }} {{ order.patronymic }}</p>
+          <p>Дата и время приема: {{ order.appointment_date }}</p>
+          <p>На услуги: {{ order.services }}</p>
+          <p>Цена услуг: {{ order.total_price }}</p>
+          <p>Промокод: {{ order.discount }}</p>
+      </li>
+    {% endfor %}
+  </ul>
+{% endblock %}

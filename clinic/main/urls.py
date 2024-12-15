@@ -38,4 +38,6 @@ urlpatterns = [
     path('reviews/', views.ReviewsList.as_view(), name='reviews'),
     path('reviews/add/', views.AddReview.as_view(), name='add_review'),
     path('reviews/delete/<int:pk>/', views.DeleteReview.as_view(), name='delete_review'),
+
+    path('orders/', views.OrdersList.as_view(), name='orders'),
 ]
