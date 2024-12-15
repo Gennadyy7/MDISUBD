@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from django.contrib.auth import logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.views import LoginView, LogoutView
@@ -9,7 +11,7 @@ from django.urls import reverse_lazy
 from django.views.generic import TemplateView, ListView, CreateView, UpdateView, DeleteView
 
 from main.forms import AddServiceForm, AddCategoryForm, AddSpecializationForm, AddUserForm, AddDoctorForm, \
-    AddPromocodeForm, AddUserForClientForm, AddReviewForm
+    AddPromocodeForm, AddUserForClientForm, AddReviewForm, AddOrderForm
 from main.models import Services, ServiceCategories, Specializations, Doctors, Promocodes, Clients, ClientLogs, Reviews, \
     Orders
 
@@ -162,6 +164,11 @@ review_validation_query = "SELECT validate_review_data(%s);"
 insert_review_query = ("""
                 INSERT INTO main_reviews (client_id, doctor_id, text, rating, created_at)
                 VALUES (%s, %s, %s, %s, NOW());
+                """)
+insert_order_query = ("""
+                INSERT INTO main_orders (doctor_id, client_id, promocode_id, appointment_date, total_price)
+                VALUES (%s, %s, %s, %s, %s)
+                RETURNING id;
                 """)
 
 class Index(TemplateView):
@@ -939,7 +946,8 @@ class OrdersList(ListView):
                     INNER JOIN main_orders_services os ON os.orders_id = o.id
                     INNER JOIN main_services s ON s.id = os.services_id
                     WHERE (%s OR o.client_id = %s)
-                    GROUP BY o.id, u.first_name, u.last_name, u.patronymic, p.discount, o.total_price, o.appointment_date;
+                    GROUP BY o.id, u.first_name, u.last_name, u.patronymic, p.discount, o.total_price, o.appointment_date
+                    ORDER BY o.appointment_date DESC;
                     ''')
             try:
                 with connection.cursor() as cursor:
@@ -963,3 +971,66 @@ class OrdersList(ListView):
             return order_list
 
         return Orders.objects.none()
+
+class AddOrder(CreateView):
+    form_class = AddOrderForm
+    template_name = 'main/orders_form.html'
+    success_url = reverse_lazy('orders')
+    extra_context = {
+        'title': 'Оформление заказа',
+    }
+
+    def form_valid(self, form):
+        services = form.cleaned_data.get('services')
+        order = form.save(commit=False)
+        order.total_price = sum(service.price for service in services)
+        try:
+            order.client = self.request.user.client
+        except Exception:
+            form.add_error(None, "Только клиенты могут оставить отзыв!!!")
+            return self.form_invalid(form)
+
+        next_day_10am = (datetime.now() + timedelta(days=1)).replace(hour=10, minute=0, second=0)
+
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT appointment_date, COUNT(os.services_id)
+                FROM main_orders o
+                LEFT JOIN main_orders_services os ON o.id = os.orders_id
+                WHERE doctor_id = %s AND appointment_date >= %s
+                GROUP BY o.appointment_date
+                ORDER BY o.appointment_date DESC
+                LIMIT 1;
+            """, [order.doctor.pk, next_day_10am])
+            result = cursor.fetchone()
+
+        if result:
+            last_appointment_date, service_count = result
+            service_count = int(service_count)
+
+            new_appointment_time = last_appointment_date + timedelta(hours=service_count)
+
+            if new_appointment_time.hour >= 18:
+                order.appointment_date = (last_appointment_date + timedelta(days=1)).replace(hour=10, minute=0,
+                                                                                             second=1)
+            else:
+                order.appointment_date = new_appointment_time
+        else:
+            order.appointment_date = (datetime.now() + timedelta(days=1)).replace(hour=10, minute=0, second=1)
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(insert_order_query, [order.doctor.pk, order.client.pk, order.promocode.pk if order.promocode else None, order.appointment_date, order.total_price])
+
+                order_id = cursor.fetchone()[0]
+
+                for service in services:
+                    cursor.execute('''
+                                    INSERT INTO main_orders_services (orders_id, services_id)
+                                    VALUES (%s, %s);
+                                ''', [order_id, service.pk])
+        except Exception as e:
+            form.add_error(None, f"Database insertion error: {e}")
+            return self.form_invalid(form)
+
+        return HttpResponseRedirect(str(self.success_url))

@@ -40,4 +40,5 @@ urlpatterns = [
     path('reviews/delete/<int:pk>/', views.DeleteReview.as_view(), name='delete_review'),
 
     path('orders/', views.OrdersList.as_view(), name='orders'),
+    path('orders/add/', views.AddOrder.as_view(), name='add_order'),
 ]

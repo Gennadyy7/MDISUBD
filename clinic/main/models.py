@@ -9,7 +9,7 @@ class User(AbstractUser):
     phone = models.CharField(max_length=20, unique=True)
 
     def __str__(self):
-        return f'{self.username} - {self.last_name} {self.first_name} {self.patronymic}'
+        return f'{self.last_name} {self.first_name} {self.patronymic}'
 
     class Meta:
         verbose_name = 'Пользователь'
@@ -44,7 +44,7 @@ class Doctors(models.Model):
     office_phone  = models.CharField(max_length=20, unique=True)
 
     def __str__(self):
-        return f'Врач {self.user}'
+        return f'Врач {self.specialization.name} ({self.specialization.service_category.name}): {self.user}'
 
     class Meta:
         verbose_name = 'Врач'
@@ -68,7 +68,7 @@ class Services(models.Model):
     category = models.ForeignKey(ServiceCategories, on_delete=models.CASCADE, related_name='services')
 
     def __str__(self):
-        return self.title
+        return f'{self.category.name}: {self.title} - {self.price}$'
 
     class Meta:
         verbose_name = 'Услуга'
@@ -95,7 +95,7 @@ class Promocodes(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.code
+        return f'{self.code} - {self.discount}%'
 
     class Meta:
         verbose_name = 'Промокод'
