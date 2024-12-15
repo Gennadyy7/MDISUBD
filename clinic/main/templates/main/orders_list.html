@@ -17,6 +17,7 @@
           <p>На услуги: {{ order.services }}</p>
           <p>Цена услуг: {{ order.total_price }}</p>
           <p>Промокод: {{ order.discount }}</p>
+          <a href="{% url 'delete_order' order.pk %}">Удалить</a>
       </li>
     {% endfor %}
   </ul>

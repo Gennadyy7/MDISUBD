@@ -959,6 +959,7 @@ class OrdersList(ListView):
             for order in orders:
                 order_dict = {
                     'id': order[0],
+                    'pk': order[0],
                     'first_name': order[1],
                     'last_name': order[2],
                     'patronymic': order[3],
@@ -1032,5 +1033,37 @@ class AddOrder(CreateView):
         except Exception as e:
             form.add_error(None, f"Database insertion error: {e}")
             return self.form_invalid(form)
+
+        return HttpResponseRedirect(str(self.success_url))
+
+class DeleteOrder(DeleteView):
+    model = Orders
+    success_url = reverse_lazy('orders')
+
+    def get_object(self, queryset=None):
+        try:
+            pk = self.kwargs.get('pk')
+            raw_object = Orders.objects.raw('''
+                        SELECT *
+                        FROM main_orders o
+                        WHERE o.id = %s;
+                    ''', [pk])
+            order = next(iter(raw_object), None)
+            if not order:
+                raise Http404('Объект order не был найден')
+        except Exception as e:
+            raise Http404(f'Ошибка получения объекта для delete: {e}')
+        return order
+
+    def get(self, request, *args, **kwargs):
+        order = self.get_object()
+        order_id = order.pk
+        delete_query = '''DELETE FROM main_orders WHERE id = %s'''
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(delete_query, [order_id])
+        except Exception as e:
+            return Http404(f'Database delete error: {e}')
 
         return HttpResponseRedirect(str(self.success_url))
