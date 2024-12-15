@@ -921,7 +921,7 @@ class OrdersList(ListView):
     def get_queryset(self):
         user = self.request.user
 
-        if hasattr(user, 'client'):
+        if hasattr(user, 'client') or user.is_superuser:
             sql = ('''
                     SELECT
                         o.id,
@@ -938,12 +938,12 @@ class OrdersList(ListView):
                     INNER JOIN main_user u ON u.id = d.user_id
                     INNER JOIN main_orders_services os ON os.orders_id = o.id
                     INNER JOIN main_services s ON s.id = os.services_id
-                    WHERE o.client_id = %s
+                    WHERE (%s OR o.client_id = %s)
                     GROUP BY o.id, u.first_name, u.last_name, u.patronymic, p.discount, o.total_price, o.appointment_date;
                     ''')
             try:
                 with connection.cursor() as cursor:
-                    cursor.execute(sql, [user.client.pk])
+                    cursor.execute(sql, [user.is_superuser, user.client.pk if not user.is_superuser else None])
                     orders = cursor.fetchall()
             except Exception as e:
                 raise Http404(f'Ошибка при попытке получения выборки заказов: {e}')
