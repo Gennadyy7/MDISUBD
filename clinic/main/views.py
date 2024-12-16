@@ -975,6 +975,48 @@ class OrdersList(LoginRequiredMixin, ListView):
                 }
                 order_list.append(order_dict)
             return order_list
+        elif hasattr(user, 'doctor'):
+            sql = ('''
+                    SELECT
+                        o.id,
+                        u.first_name,
+                        u.last_name,
+                        u.patronymic,
+                        p.discount,
+                        o.total_price,
+                        o.appointment_date,
+                        STRING_AGG(s.title, ', ') AS services
+                    FROM main_orders o
+                    LEFT JOIN main_promocodes p ON p.id = o.promocode_id
+                    INNER JOIN main_doctors d ON d.id = o.doctor_id
+                    INNER JOIN main_user u ON u.id = d.user_id
+                    INNER JOIN main_orders_services os ON os.orders_id = o.id
+                    INNER JOIN main_services s ON s.id = os.services_id
+                    WHERE d.id = %s
+                    GROUP BY o.id, u.first_name, u.last_name, u.patronymic, p.discount, o.total_price, o.appointment_date
+                    ORDER BY o.appointment_date DESC;
+                    ''')
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute(sql, [user.doctor.pk])
+                    orders = cursor.fetchall()
+            except Exception as e:
+                raise Http404(f'Ошибка при попытке получения выборки заказов: {e}')
+            order_list = []
+            for order in orders:
+                order_dict = {
+                    'id': order[0],
+                    'pk': order[0],
+                    'first_name': order[1],
+                    'last_name': order[2],
+                    'patronymic': order[3],
+                    'discount': str(order[4]) + '%' if order[4] else 'Нет',
+                    'total_price': order[5],
+                    'appointment_date': order[6],
+                    'services': order[7],
+                }
+                order_list.append(order_dict)
+            return order_list
 
         return Orders.objects.none()
 
@@ -993,7 +1035,7 @@ class AddOrder(CreateView):
         try:
             order.client = self.request.user.client
         except Exception:
-            form.add_error(None, "Только клиенты могут оставить отзыв!!!")
+            form.add_error(None, "Только клиенты могут оформлять заказы!!!")
             return self.form_invalid(form)
 
         next_day_10am = (datetime.now() + timedelta(days=1)).replace(hour=10, minute=0, second=0)
