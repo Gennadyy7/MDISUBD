@@ -551,7 +551,7 @@ class DeleteSpecialization(SuperUserRequiredMixin, DeleteView):
 class DoctorsList(ListView):
     model = Doctors
 
-class AddUserForDoctor(SuperUserRequiredMixin, CreateView):
+class AddUserForDoctor(CreateView):
     form_class = AddUserForm
     template_name = 'main/users_form.html'
     success_url = reverse_lazy('doctors')

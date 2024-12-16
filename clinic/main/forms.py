@@ -36,8 +36,7 @@ class AddUserForClientForm(forms.ModelForm):
         required=True,
         max_length=255,
         widget=forms.TextInput(attrs={
-            'placeholder': 'ул. Иваново, д. 111/11, кв. 11',
-            'style': 'width: 200px;',})
+            'placeholder': 'ул. Иваново, д. 111/11, кв. 11',})
     )
     class Meta:
         model = User

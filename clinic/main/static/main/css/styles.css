@@ -1,0 +1,291 @@
+/* Общий стиль для всего сайта */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #121212; /* Тёмный фон */
+    color: #ffffff; /* Светлый текст */
+}
+
+/* Стили для хедера */
+#site-header {
+    display: flex;
+    justify-content: space-between; /* Располагает элементы по краям */
+    align-items: center; /* Выравнивает элементы по вертикали */
+    padding: 10px 20px; /* Отступы внутри хедера */
+    background-color: #1e1e1e; /* Фон хедера чуть светлее основного */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5); /* Тень для отделения от контента */
+    position: sticky; /* Фиксируется при прокрутке */
+    top: 0;
+    z-index: 1000;
+}
+
+/* Контейнер для навигации */
+#header-content {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Стили выпадающих списков */
+select {
+    background-color: #2c2c2c; /* Тёмный фон */
+    color: #ffffff; /* Светлый текст */
+    border: none; /* Убираем стандартную рамку */
+    border-radius: 5px; /* Закругляем края */
+    padding: 8px 12px; /* Внутренние отступы */
+    font-size: 16px; /* Размер шрифта */
+    cursor: pointer; /* Курсор-указатель */
+    outline: none; /* Убираем подсветку */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4); /* Лёгкая тень */
+    transition: background-color 0.3s ease;
+}
+
+/* Стили при наведении и фокусе */
+select:hover, select:focus {
+    background-color: #3a3a3a; /* Светлее при наведении */
+}
+
+/* Адаптивное расположение элементов */
+#header-nav {
+    display: flex;
+    justify-content: space-between; /* Размещаем выпадающие списки по краям */
+    width: 100%;
+}
+
+/* Лейблы для выпадающих списков */
+label {
+    margin-right: 10px; /* Отступ между лейблом и списком */
+    font-size: 14px;
+    color: #bbbbbb; /* Более мягкий цвет для лейблов */
+}
+
+/* Для мобильных устройств */
+@media (max-width: 768px) {
+    #site-header {
+        flex-direction: column; /* Располагаем элементы друг под другом */
+        align-items: flex-start;
+        padding: 15px;
+    }
+
+    #header-nav {
+        flex-direction: column; /* Списки друг под другом */
+        width: 100%;
+    }
+
+    select {
+        width: 100%; /* Растягиваем список на всю ширину */
+        margin-bottom: 10px; /* Отступ между списками */
+    }
+}
+
+/* Общие стили для основного контента */
+#main-content {
+    max-width: 800px; /* Ограничение ширины контента */
+    margin: 20px auto; /* Центрирование блока */
+    padding: 20px;
+    background-color: #1e1e1e; /* Фон блока */
+    border-radius: 8px; /* Скруглённые углы */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Тень для блока */
+    color: #f0f0f0; /* Светлый текст */
+    line-height: 1.6; /* Интервал между строками */
+}
+
+/* Заголовки */
+h1 {
+    font-size: 2rem;
+    text-align: center;
+    margin-bottom: 20px;
+    color: #ffffff; /* Яркий белый цвет для заголовков */
+}
+
+h2, h3, h4 {
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    color: #dcdcdc; /* Серый оттенок для второстепенных заголовков */
+    text-align: center;
+}
+
+/* Общий стиль для списков */
+ul {
+    list-style: none; /* Убираем стандартные маркеры */
+    margin: 0;
+    padding: 0;
+}
+
+ul li {
+    background-color: #2c2c2c; /* Тёмный фон для элемента списка */
+    border: 1px solid #444; /* Граница вокруг элемента */
+    border-radius: 8px; /* Скруглённые углы */
+    padding: 15px;
+    margin-bottom: 15px; /* Отступ между элементами списка */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); /* Легкая тень */
+    transition: transform 0.2s ease, box-shadow 0.2s ease; /* Плавные эффекты */
+}
+
+ul li:hover {
+    transform: translateY(-5px); /* Небольшой эффект при наведении */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5); /* Увеличение тени */
+}
+
+ul li strong {
+    display: inline-block; /* Каждый `strong` выводится с отступами */
+    margin-bottom: 5px;
+    color: #f0f0f0; /* Яркий текст для важных элементов */
+}
+
+ul li p {
+    margin: 5px 0; /* Отступы между параграфами */
+    color: #dcdcdc; /* Светло-серый цвет текста */
+    font-size: 0.95rem; /* Немного уменьшенный шрифт */
+}
+
+ul li a {
+    display: inline-block;
+    margin-top: 10px;
+    margin-right: 10px;
+    padding: 8px 12px;
+    text-decoration: none;
+    color: #ffffff;
+    background-color: #6e6eff; /* Цвет кнопок */
+    border-radius: 5px;
+    font-size: 0.9rem;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+ul li a:hover {
+    background-color: #5a5adb; /* Темнее при наведении */
+    transform: scale(1.05);
+}
+
+/* Заголовки списков */
+h1 {
+    font-size: 2rem;
+    text-align: center;
+    color: #ffffff;
+    margin-bottom: 20px;
+}
+
+/* Дополнительная адаптивность */
+@media (max-width: 600px) {
+    ul li {
+        padding: 10px;
+    }
+
+    ul li strong {
+        font-size: 1rem;
+    }
+
+    ul li a {
+        padding: 6px 10px;
+        font-size: 0.85rem;
+    }
+}
+
+/* Общий стиль для форм */
+form {
+    max-width: 600px;
+    margin: 0 auto; /* Центрируем форму */
+    padding: 20px;
+    background-color: #2c2c2c; /* Тёмный фон формы */
+    border: 1px solid #444;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* Стиль для заголовка формы */
+form h1 {
+    text-align: center;
+    color: #ffffff;
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+}
+
+/* Поля формы */
+form p {
+    margin-bottom: 15px; /* Отступы между элементами формы */
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Метки */
+form label.form-label {
+    color: #ffffff; /* Цвет меток */
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+/* Текстовые поля, выпадающие списки и другие интерактивные элементы */
+form input[type="text"],
+form input[type="email"],
+form input[type="password"],
+form select,
+form textarea {
+    width: calc(100% - 20px);
+    padding: 10px;
+    border: 1px solid #555;
+    border-radius: 5px;
+    background-color: #1c1c1c;
+    color: #ffffff;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+form select {
+    width: 100%;
+}
+
+form input[type="text"]:focus,
+form input[type="email"]:focus,
+form input[type="password"]:focus,
+form select:focus,
+form textarea:focus {
+    border-color: #6e6eff; /* Подсветка при фокусе */
+    outline: none;
+}
+
+/* Кнопки */
+form button[type="submit"] {
+    width: 100%;
+    padding: 12px 20px;
+    background-color: #6e6eff;
+    border: none;
+    border-radius: 5px;
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+form button[type="submit"]:hover {
+    background-color: #5a5adb;
+    transform: scale(1.05);
+}
+
+/* Ошибки */
+#form-error,
+.form-error {
+    color: #ff6b6b;
+    font-size: 0.9rem;
+    margin-top: -8px; /* Чтобы ошибка не добавляла лишний отступ */
+    margin-bottom: 10px;
+}
+
+/* Адаптивность */
+@media (max-width: 600px) {
+    form {
+        padding: 15px;
+    }
+
+    form h1 {
+        font-size: 1.5rem;
+    }
+
+    form button[type="submit"] {
+        font-size: 0.9rem;
+    }
+}
+
