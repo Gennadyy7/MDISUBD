@@ -20,20 +20,30 @@
                         <option value="{% url 'home' %}">Главная</option>
 
                         <option value="{% url 'services' %}">Услуги</option>
-                        <option value="{% url 'add_service' %}">Добавить услугу</option>
+                        {% if user.is_superuser %}
+                            <option value="{% url 'add_service' %}">Добавить услугу</option>
+                        {% endif %}
 
                         <option value="{% url 'categories' %}">Категории услуг</option>
-                        <option value="{% url 'add_category' %}">Добавить категорию услуг</option>
+                        {% if user.is_superuser %}
+                            <option value="{% url 'add_category' %}">Добавить категорию услуг</option>
+                        {% endif %}
 
                         <option value="{% url 'specializations' %}">Специализации врачей</option>
-                        <option value="{% url 'add_specialization' %}">Добавить специализацию врачей</option>
+                        {% if user.is_superuser %}
+                            <option value="{% url 'add_specialization' %}">Добавить специализацию врачей</option>
+                        {% endif %}
 
                         <option value="{% url 'doctors' %}">Врачи</option>
-                        <option value="{% url 'add_user_for_doctor' %}">Добавить пользователя</option>
-                        <option value="{% url 'add_doctor' %}">Добавить врача</option>
+                        {% if user.is_superuser %}
+                            <option value="{% url 'add_user_for_doctor' %}">Добавить пользователя</option>
+                            <option value="{% url 'add_doctor' %}">Добавить врача</option>
+                        {% endif %}
 
                         <option value="{% url 'promocodes' %}">Промокоды</option>
-                        <option value="{% url 'add_promocode' %}">Добавить промокод</option>
+                        {% if user.is_superuser %}
+                            <option value="{% url 'add_promocode' %}">Добавить промокод</option>
+                        {% endif %}
 
                         <option value="{% url 'reviews' %}">Отзывы</option>
                         <option value="{% url 'add_review' %}">Оставить отзыв</option>
@@ -41,7 +51,9 @@
                         <option value="{% url 'orders' %}">Заказы</option>
                         <option value="{% url 'add_order' %}">Оформить заказ</option>
 
-                        <option value="{% url 'client_logs' %}">Пользовательские логи</option>
+                        {% if user.is_superuser %}
+                            <option value="{% url 'client_logs' %}">Пользовательские логи</option>
+                        {% endif %}
                     </select>
                     <label for="users-select">Пользователи:</label>
                     <select id="users-select" onchange="handleNavigation(this)">

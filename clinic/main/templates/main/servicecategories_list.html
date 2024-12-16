@@ -8,8 +8,10 @@
     {% for category in object_list %}
       <li>
           <strong>{{ category.name }}</strong> - <strong>{{ category.specialization_name }}</strong>
+          {% if user.is_superuser %}
           <a href="{% url 'update_category' category.pk %}">Изменить</a>
           <a href="{% url 'delete_category' category.pk %}">Удалить</a>
+          {% endif %}
       </li>
     {% endfor %}
   </ul>

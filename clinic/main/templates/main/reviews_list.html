@@ -10,7 +10,9 @@
           <strong>{{ review.rating }}</strong> - <strong>{{ review.username }}</strong> - {{ review.last_name }} {{ review.first_name }} {{ review.patronymic }}
           <pre>{{ review.text }}</pre>
           <p>{{ review.created_at }}</p>
+          {% if user.is_superuser %}
           <a href="{% url 'delete_review' review.pk %}">Удалить</a>
+          {% endif %}
       </li>
     {% endfor %}
   </ul>

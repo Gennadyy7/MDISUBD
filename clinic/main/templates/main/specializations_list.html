@@ -9,8 +9,10 @@
       <li>
           <strong>{{ specialization.name }}</strong>
           <p>{{ specialization.description }}</p>
+          {% if user.is_superuser %}
           <a href="{% url 'update_specialization' specialization.pk %}">Изменить</a>
           <a href="{% url 'delete_specialization' specialization.pk %}">Удалить</a>
+          {% endif %}
       </li>
     {% endfor %}
   </ul>

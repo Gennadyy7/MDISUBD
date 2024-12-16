@@ -10,8 +10,10 @@
           <strong>{{ doctor.user.last_name }}</strong> - <strong>{{ doctor.user.first_name }}</strong> - <strong>{{ doctor.user.patronymic }}</strong>
           <p>{{ doctor.specialization }}</p>
           <p>{{ doctor.office_phone }}</p>
+          {% if user.is_superuser %}
           <a href="{% url 'update_doctor' doctor.pk %}">Изменить</a>
           <a href="{% url 'delete_doctor' doctor.pk %}">Удалить</a>
+          {% endif %}
       </li>
     {% endfor %}
   </ul>

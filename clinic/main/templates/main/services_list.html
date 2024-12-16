@@ -14,8 +14,10 @@
             <li>
               <strong>{{ service.title }}</strong> - <strong>{{ service.price }} $</strong>
               <p>{{ service.description }}</p>
+              {% if user.is_superuser %}
               <a href="{% url 'update_service' service.pk %}">Изменить</a>
               <a href="{% url 'delete_service' service.pk %}">Удалить</a>
+              {% endif %}
             </li>
           {% endfor %}
         </ul>
