@@ -2,8 +2,9 @@ from datetime import datetime, timedelta
 
 from django.contrib.auth import logout
 from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
 from django.contrib.auth.views import LoginView, LogoutView
-from django.db import connection
+from django.db import connection, transaction
 from django.db.transaction import commit
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render, redirect
@@ -171,6 +172,10 @@ insert_order_query = ("""
                 RETURNING id;
                 """)
 
+class SuperUserRequiredMixin(UserPassesTestMixin):
+    def test_func(self):
+        return self.request.user.is_superuser
+
 class Index(TemplateView):
     template_name = 'main/index.html'
 
@@ -191,7 +196,7 @@ class ServicesList(ListView):
             ORDER BY c.name, s.title;
         ''')
 
-class AddService(CreateView):
+class AddService(SuperUserRequiredMixin, CreateView):
     form_class = AddServiceForm
     template_name = 'main/services_form.html'
     success_url = reverse_lazy('services')
@@ -230,7 +235,7 @@ class AddService(CreateView):
 
         return HttpResponseRedirect(str(self.success_url))
 
-class UpdateService(UpdateView):
+class UpdateService(SuperUserRequiredMixin, UpdateView):
     model = Services
     form_class = AddServiceForm
     template_name = 'main/services_form.html'
@@ -292,7 +297,7 @@ class UpdateService(UpdateView):
 
         return HttpResponseRedirect(str(self.success_url))
 
-class DeleteService(DeleteView):
+class DeleteService(SuperUserRequiredMixin, DeleteView):
     model = Services
     success_url = reverse_lazy('services')
 
@@ -344,7 +349,7 @@ class CategoriesList(ListView):
         ''')
         return ss
 
-class AddCategory(CreateView):
+class AddCategory(SuperUserRequiredMixin, CreateView):
     form_class = AddCategoryForm
     template_name = 'main/categories_form.html'
     success_url = reverse_lazy('categories')
@@ -363,7 +368,7 @@ class AddCategory(CreateView):
 
         return HttpResponseRedirect(str(self.success_url))
 
-class UpdateCategory(UpdateView):
+class UpdateCategory(SuperUserRequiredMixin, UpdateView):
     model = ServiceCategories
     form_class = AddCategoryForm
     template_name = 'main/categories_form.html'
@@ -401,7 +406,7 @@ class UpdateCategory(UpdateView):
 
         return HttpResponseRedirect(str(self.success_url))
 
-class DeleteCategory(DeleteView):
+class DeleteCategory(SuperUserRequiredMixin, DeleteView):
     model = ServiceCategories
     success_url = reverse_lazy('categories')
 
@@ -449,7 +454,7 @@ class SpecializationsList(ListView):
             ORDER BY sp.name;
         ''')
 
-class AddSpecialization(CreateView):
+class AddSpecialization(SuperUserRequiredMixin, CreateView):
     form_class = AddSpecializationForm
     template_name = 'main/specializations_form.html'
     success_url = reverse_lazy('specializations')
@@ -468,7 +473,7 @@ class AddSpecialization(CreateView):
 
         return HttpResponseRedirect(str(self.success_url))
 
-class UpdateSpecialization(UpdateView):
+class UpdateSpecialization(SuperUserRequiredMixin, UpdateView):
     model = Specializations
     form_class = AddSpecializationForm
     template_name = 'main/specializations_form.html'
@@ -506,7 +511,7 @@ class UpdateSpecialization(UpdateView):
 
         return HttpResponseRedirect(str(self.success_url))
 
-class DeleteSpecialization(DeleteView):
+class DeleteSpecialization(SuperUserRequiredMixin, DeleteView):
     model = Specializations
     success_url = reverse_lazy('specializations')
 
@@ -546,7 +551,7 @@ class DeleteSpecialization(DeleteView):
 class DoctorsList(ListView):
     model = Doctors
 
-class AddUserForDoctor(CreateView):
+class AddUserForDoctor(SuperUserRequiredMixin, CreateView):
     form_class = AddUserForm
     template_name = 'main/users_form.html'
     success_url = reverse_lazy('doctors')
@@ -581,7 +586,7 @@ class AddUserForDoctor(CreateView):
 
         return super().form_valid(form)
 
-class AddDoctor(CreateView):
+class AddDoctor(SuperUserRequiredMixin, CreateView):
     form_class = AddDoctorForm
     template_name = 'main/doctors_form.html'
     success_url = reverse_lazy('doctors')
@@ -611,7 +616,7 @@ class AddDoctor(CreateView):
 
         return super().form_valid(form)
 
-class UpdateDoctor(UpdateView):
+class UpdateDoctor(SuperUserRequiredMixin, UpdateView):
     model = Doctors
     form_class = AddDoctorForm
     template_name = 'main/doctors_form.html'
@@ -641,7 +646,7 @@ class UpdateDoctor(UpdateView):
 
         return super().form_valid(form)
     
-class DeleteDoctor(DeleteView):
+class DeleteDoctor(SuperUserRequiredMixin, DeleteView):
     model = Doctors
     success_url = reverse_lazy('doctors')
 
@@ -668,7 +673,7 @@ class PromocodesList(ListView):
             ORDER BY pr.code;
         ''')
 
-class AddPromocode(CreateView):
+class AddPromocode(SuperUserRequiredMixin, CreateView):
     form_class = AddPromocodeForm
     template_name = 'main/promocodes_form.html'
     success_url = reverse_lazy('promocodes')
@@ -707,7 +712,7 @@ class AddPromocode(CreateView):
 
         return HttpResponseRedirect(str(self.success_url))
 
-class DeletePromocode(DeleteView):
+class DeletePromocode(SuperUserRequiredMixin, DeleteView):
     model = Promocodes
     success_url = reverse_lazy('promocodes')
 
@@ -798,7 +803,7 @@ class RegisterUser(AddUserForDoctor):
 
         return HttpResponseRedirect(str(self.success_url))
 
-class ClientLogsList(ListView):
+class ClientLogsList(SuperUserRequiredMixin, ListView):
     model = ClientLogs
 
     def get_queryset(self):
@@ -817,7 +822,7 @@ class ClientLogsList(ListView):
             ORDER BY cll.created_at DESC;
         ''')
 
-class ReviewsList(ListView):
+class ReviewsList(LoginRequiredMixin, ListView):
     model = Reviews
 
     def get_queryset(self):
@@ -883,7 +888,7 @@ class AddReview(CreateView):
 
         return HttpResponseRedirect(str(self.success_url))
 
-class DeleteReview(DeleteView):
+class DeleteReview(SuperUserRequiredMixin, DeleteView):
     model = Reviews
     success_url = reverse_lazy('reviews')
 
@@ -921,7 +926,7 @@ class DeleteReview(DeleteView):
 
         return HttpResponseRedirect(str(self.success_url))
 
-class OrdersList(ListView):
+class OrdersList(LoginRequiredMixin, ListView):
     model = Orders
     template_name = 'main/orders_list.html'
 
@@ -1020,23 +1025,24 @@ class AddOrder(CreateView):
             order.appointment_date = (datetime.now() + timedelta(days=1)).replace(hour=10, minute=0, second=1)
 
         try:
-            with connection.cursor() as cursor:
-                cursor.execute(insert_order_query, [order.doctor.pk, order.client.pk, order.promocode.pk if order.promocode else None, order.appointment_date, order.total_price])
+            with transaction.atomic():
+                with connection.cursor() as cursor:
+                    cursor.execute(insert_order_query, [order.doctor.pk, order.client.pk, order.promocode.pk if order.promocode else None, order.appointment_date, order.total_price])
 
-                order_id = cursor.fetchone()[0]
+                    order_id = cursor.fetchone()[0]
 
-                for service in services:
-                    cursor.execute('''
-                                    INSERT INTO main_orders_services (orders_id, services_id)
-                                    VALUES (%s, %s);
-                                ''', [order_id, service.pk])
+                    for service in services:
+                        cursor.execute('''
+                                        INSERT INTO main_orders_services (orders_id, services_id)
+                                        VALUES (%s, %s);
+                                    ''', [order_id, service.pk])
         except Exception as e:
             form.add_error(None, f"Database insertion error: {e}")
             return self.form_invalid(form)
 
         return HttpResponseRedirect(str(self.success_url))
 
-class DeleteOrder(DeleteView):
+class DeleteOrder(SuperUserRequiredMixin, DeleteView):
     model = Orders
     success_url = reverse_lazy('orders')
 
