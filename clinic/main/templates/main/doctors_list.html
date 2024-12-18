@@ -7,7 +7,7 @@
   <ul>
     {% for doctor in object_list %}
       <li>
-          <strong>{{ doctor.user.last_name }}</strong> - <strong>{{ doctor.user.first_name }}</strong> - <strong>{{ doctor.user.patronymic }}</strong>
+          <strong>{{ doctor.user.last_name }}</strong> <strong>{{ doctor.user.first_name }}</strong> <strong>{{ doctor.user.patronymic }}</strong>
           <p>{{ doctor.specialization }}</p>
           <p>{{ doctor.office_phone }}</p>
           {% if user.is_superuser %}

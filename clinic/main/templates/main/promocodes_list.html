@@ -9,7 +9,9 @@
       <li>
           <strong>{{ promocode.code }}</strong> - <strong>{{ promocode.discount }}%</strong> - <strong>{{ promocode.expiration_date }}</strong>
           {% if user.is_superuser %}
-          <a href="{% url 'delete_promocode' promocode.pk %}">Удалить</a>
+          <div>
+              <a href="{% url 'delete_promocode' promocode.pk %}">Удалить</a>
+          </div>
           {% endif %}
       </li>
     {% endfor %}

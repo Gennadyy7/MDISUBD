@@ -7,7 +7,10 @@
   <ul>
     {% for review in object_list %}
       <li>
-          <strong>{{ review.rating }}</strong> - <strong>{{ review.username }}</strong> - {{ review.last_name }} {{ review.first_name }} {{ review.patronymic }}
+          <strong>Оценка: {{ review.rating }}/5</strong>
+          <div>
+              <strong>{{ review.username }}</strong> на {{ review.last_name }} {{ review.first_name }} {{ review.patronymic }}
+          </div>
           <pre>{{ review.text }}</pre>
           <p>{{ review.created_at }}</p>
           {% if user.is_superuser %}
